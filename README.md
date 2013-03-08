@@ -1,13 +1,13 @@
-OS2Web ESDH Provider
+OS2Web ESDH Fields
 ==============================
 
 Description
 -----------
-Fields which displaya a case or doc from the pws webservice.
+Fields which display a case or doc from the pws webservice.
 
 Dependencies
 -----------
-- ctools
+- os2web_esdh_provider
 
 Installation
 -----------
