@@ -5,8 +5,6 @@ core = 7.x
 configure = admin/config/os2web/pws
 tags[] = os2web
 
-dependencies[] = os2web_esdh_provider
-
 ;Added by OS2Web 2012-10-09
 project=OS2Web
 version=7.x-1.3
