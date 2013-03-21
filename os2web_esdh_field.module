@@ -205,7 +205,7 @@ function os2web_esdh_field_theme() {
 function theme_os2web_esdh_case($vars) {
   // Check for correct api and required functions are implemented.
   if (!os2web_esdh_provider_has_api('cm')) {
-    drupal_set_message('Error in case lookup API. Check status.', 'error');
+    drupal_set_message(t('Error in case lookup API. Check status.'), 'error');
     return '';
   }
   $ids = $vars['id'];
@@ -237,7 +237,7 @@ function theme_os2web_esdh_case($vars) {
 function theme_os2web_esdh_document($vars) {
   // Check for correct api and required functions are implemented.
   if (!os2web_esdh_provider_has_api('cm')) {
-    drupal_set_message('Error in document lookup API. Check status.', 'error');
+    drupal_set_message(t('Error in document lookup API. Check status.'), 'error');
     return '';
   }
   $id = $vars['id'];
