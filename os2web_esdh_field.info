@@ -1,6 +1,6 @@
 name = OS2Web ESDH Fields
 description = Fields which displaya a case or doc from the pws webservice.
-package = OS2Web - AcadreCM
+package = OS2Web - Backend
 core = 7.x
 configure = admin/config/os2web/pws
 tags[] = os2web
