@@ -8,22 +8,30 @@
  * Implements hook_schema().
  */
 function os2web_esdh_field_field_schema($field) {
-  return array(
-    'columns' => array(
-      'os2web_esdh_field_case_ident' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'os2web_esdh_field_doc_ident' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-    )
-  );
+  if($field['type'] == 'os2web_esdh_field_case_ident') {
+    return array(
+      'columns' => array(
+        'os2web_esdh_field_case_ident' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => '',
+        )
+      )
+    );
+  }
+  if($field['type'] == 'os2web_esdh_field_doc_ident') {
+    return array(
+      'columns' => array(
+        'os2web_esdh_field_doc_ident' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => '',
+        )
+      )
+    );
+  }
 }
 
 /**
