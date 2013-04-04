@@ -17,14 +17,14 @@ function os2web_esdh_field_field_info() {
     'os2web_esdh_field_case_ident' => array(
       'label' => t('ESDH Case'),
       'description' => 'Sags-id skal være på formen år/nummer eller år-nummer. Kun én værdi er tilladte.',
-      'default_widget' => 'os2web_esdh_field_case_ident_widget',
-      'default_formatter' => 'os2web_esdh_field_case_ident_formatter',
+      'default_widget' => 'os2web_esdh_field_case_ident_wid',
+      'default_formatter' => 'os2web_esdh_field_case_ident_for',
     ),
     'os2web_esdh_field_doc_ident' => array(
       'label' => t('ESDH Document'),
       'description' => 'Dokument-id skal være på formen nummer/år eller nummer-år. Flere dokumenter skal være adskildt af , (komma).',
-      'default_widget' => 'os2web_esdh_field_doc_ident_widget',
-      'default_formatter' => 'os2web_esdh_field_doc_ident_formatter',
+      'default_widget' => 'os2web_esdh_field_doc_ident_wid',
+      'default_formatter' => 'os2web_esdh_field_doc_ident_for',
     ),
   );
 }
@@ -34,11 +34,11 @@ function os2web_esdh_field_field_info() {
  */
 function os2web_esdh_field_field_formatter_info() {
   return array(
-    'os2web_esdh_field_case_ident_formatter' => array(
+    'os2web_esdh_field_case_ident_for' => array(
       'label' => t('ESDH Case includer'),
       'field types' => array('os2web_esdh_field_case_ident'),
     ),
-    'os2web_esdh_field_doc_ident_formatter' => array(
+    'os2web_esdh_field_doc_ident_for' => array(
       'label' => t('ESDH Document includer'),
       'field types' => array('os2web_esdh_field_doc_ident'),
     ),
@@ -51,11 +51,11 @@ function os2web_esdh_field_field_formatter_info() {
 function os2web_esdh_field_field_widget_info() {
 
   return array(
-    'os2web_esdh_field_case_ident_widget' => array(
+    'os2web_esdh_field_case_ident_wid' => array(
       'label' => t('Case Identifier'),
       'field types' => array('os2web_esdh_field_case_ident'),
     ),
-    'os2web_esdh_field_doc_ident_widget' => array(
+    'os2web_esdh_field_doc_ident_wid' => array(
       'label' => t('Document Identifier'),
       'field types' => array('os2web_esdh_field_doc_ident'),
     ),
@@ -73,7 +73,7 @@ function os2web_esdh_field_field_widget_form(&$form, &$form_state, $field, $inst
     $default = ($form_state['node']->{$field_name}[$langcode][$delta][$field_type])? : 0;
   }
   switch ($instance['widget']['type']) {
-    case 'os2web_esdh_field_case_ident_widget':
+    case 'os2web_esdh_field_case_ident_wid':
       $element['os2web_esdh_field_case_ident'] = array(
         '#type' => 'textfield',
         '#title' => check_plain($element['#title']),
@@ -85,7 +85,7 @@ function os2web_esdh_field_field_widget_form(&$form, &$form_state, $field, $inst
       );
       break;
 
-    case 'os2web_esdh_field_doc_ident_widget':
+    case 'os2web_esdh_field_doc_ident_wid':
       $element['os2web_esdh_field_doc_ident'] = array(
         '#type' => 'textfield',
         '#title' => check_plain($element['#title']),
@@ -155,7 +155,7 @@ function os2web_esdh_field_field_validate($entity_type, $entity, $field, $instan
 function os2web_esdh_field_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
   switch ($display['type']) {
-    case 'os2web_esdh_field_case_ident_formatter':
+    case 'os2web_esdh_field_case_ident_for':
       foreach ($items as $delta => $item) {
         if ($item['os2web_esdh_field_case_ident']) {
           $cases = array();
@@ -169,7 +169,7 @@ function os2web_esdh_field_field_formatter_view($entity_type, $entity, $field, $
       }
       break;
 
-    case 'os2web_esdh_field_doc_ident_formatter':
+    case 'os2web_esdh_field_doc_ident_for':
       foreach ($items as $delta => $item) {
         if ($item['os2web_esdh_field_doc_ident']) {
           $docs = array();
