@@ -8,7 +8,7 @@
  * Implements hook_schema().
  */
 function os2web_esdh_field_field_schema($field) {
-  if($field['type'] == 'os2web_esdh_field_case_ident') {
+  if ($field['type'] == 'os2web_esdh_field_case_ident') {
     return array(
       'columns' => array(
         'os2web_esdh_field_case_ident' => array(
@@ -16,11 +16,11 @@ function os2web_esdh_field_field_schema($field) {
           'length' => 255,
           'not null' => TRUE,
           'default' => '',
-        )
-      )
+        ),
+      ),
     );
   }
-  if($field['type'] == 'os2web_esdh_field_doc_ident') {
+  if ($field['type'] == 'os2web_esdh_field_doc_ident') {
     return array(
       'columns' => array(
         'os2web_esdh_field_doc_ident' => array(
@@ -28,31 +28,17 @@ function os2web_esdh_field_field_schema($field) {
           'length' => 255,
           'not null' => TRUE,
           'default' => '',
-        )
-      )
+        ),
+      ),
     );
   }
-}
-
-/**
- * Implements hook_install().
- */
-function os2web_esdh_field_install() {
-  // Placeholder.
-}
-
-/**
- * Implements hook_uninstall().
- */
-function os2web_esdh_field_uninstall() {
-  // Placeholder.
 }
 
 /**
  * Extends the case identifier field column to support multiple cases.
  */
 function os2web_esdh_field_update_7002(&$sandbox) {
-    foreach (field_info_fields() as $field_name => $field) {
+  foreach (field_info_fields() as $field_name => $field) {
     if ($field['type'] != 'os2web_esdh_field_doc_ident') {
       // Not an entity reference field.
       continue;
