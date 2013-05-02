@@ -354,3 +354,14 @@ function _os2web_esdh_field_array_compare(array $a1, array $a2) {
   }
   return $result;
 }
+
+/**
+ * Implements hook_os2web_help().
+ */
+function os2web_esdh_field_os2web_help($sections) {
+
+  // Fields.
+  $sections['fields'] = t('<p><b>Link to cases and documents:</b> Many contenttypes has ability to link to cases and documents in the ESDH case system. When pages gets linked to cases and documents, links to them will automatically gets generated at the bottom of the page.</p>');
+
+  return $sections;
+}
