@@ -263,7 +263,7 @@ function theme_os2web_esdh_document($vars) {
   $rows = array();
   foreach ($id as $docid) {
     $doc = os2web_esdh_provider_invoke('cm', 'get_document', $docid);
-    if (_os2web_doc_field_doc_access($docid)) {
+    if (_os2web_esdh_field_doc_access($docid)) {
       // Only show public documents.
       if (($doc !== FALSE) && _os2web_esdh_field_case_access($doc['case_reference'])) {
         $rows[] = array(
@@ -327,7 +327,7 @@ function _os2web_esdh_field_doc_access($docid) {
     'publication' => $doc['publication_indicator'],
     'lockstatus' => $doc['lock_status'],
   );
-  return _os2web_doc_field_array_compare($access, $access_grant);
+  return _os2web_esdh_field_array_compare($access, $access_grant);
 }
 
 /**
