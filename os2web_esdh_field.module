@@ -224,18 +224,31 @@ function theme_os2web_esdh_case($vars) {
   }
   $docids = array();
   foreach ($ids as $id) {
-    $case = os2web_esdh_provider_invoke('cm', 'get_case_data', $id);
-    // error_log("Var: \$case = " . print_r($case, 1));
-    if (FALSE === $case) {
-      // Ignore failed case lookups.
-      continue;
+    try {
+      $case = os2web_esdh_provider_invoke('cm', 'get_case_data', $id);
+      // error_log("Var: \$case = " . print_r($case, 1));
+      if (FALSE === $case) {
+        // Ignore failed case lookups.
+        continue;
+      }
+      $valid = _os2web_esdh_field_case_access($id);
+      if (!$valid) {
+        // Ignore hidden cases.
+        continue;
+      }
+      $docids = array_merge($docids, os2web_esdh_provider_invoke('cm', 'get_case_docs', $id));
+    } catch (Exception $e) {
+      // Show a polite message if the connection to Acadre is broken.
+      $markup = '<div class="messages error"><ul><li>';
+      $markup .= t('There was a problem connecting to the case service provider. Sorry for the inconvenience.');
+      $markup .= '</li></ul></div>';
+
+      $page['region'] = array(
+        '#type' => 'markup',
+        '#markup' => $markup,
+      );
+      return render($page);
     }
-    $valid = _os2web_esdh_field_case_access($id);
-    if (!$valid) {
-      // Ignore hidden cases.
-      continue;
-    }
-    $docids = array_merge($docids, os2web_esdh_provider_invoke('cm', 'get_case_docs', $id));
   }
   $html = theme('os2web_esdh_document', array('id' => $docids, 'iscase' => TRUE));
   return $html;
@@ -263,7 +276,7 @@ function theme_os2web_esdh_document($vars) {
   $rows = array();
   foreach ($id as $docid) {
     $doc = os2web_esdh_provider_invoke('cm', 'get_document', $docid);
-    if (_os2web_doc_field_doc_access($docid)) {
+    if (_os2web_esdh_field_doc_access($docid)) {
       // Only show public documents.
       if (($doc !== FALSE) && _os2web_esdh_field_case_access($doc['case_reference'])) {
         $rows[] = array(
@@ -327,7 +340,7 @@ function _os2web_esdh_field_doc_access($docid) {
     'publication' => $doc['publication_indicator'],
     'lockstatus' => $doc['lock_status'],
   );
-  return _os2web_doc_field_array_compare($access, $access_grant);
+  return _os2web_esdh_field_array_compare($access, $access_grant);
 }
 
 /**
