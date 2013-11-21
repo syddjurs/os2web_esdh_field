@@ -5,7 +5,7 @@
  */
 
 /**
- * Implements hook_schema().
+ * Implements hook_field_schema().
  */
 function os2web_esdh_field_field_schema($field) {
   if ($field['type'] == 'os2web_esdh_field_case_ident') {
@@ -32,6 +32,40 @@ function os2web_esdh_field_field_schema($field) {
       ),
     );
   }
+}
+
+/**
+ * Implements hook_schema().
+ */
+function os2web_acadre_esdh_schema() {
+  $schema['os2web_acadre_esdh_cm_documents'] = array(
+    'description' => 'This table keep track of files from Acadre PWS which needs to be created/updated',
+    'fields' => array(
+      'fid' => array(
+        'description' => 'The file entry id.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'defualt' => NULL,
+      ),
+      'did' => array(
+        'description' => 'The document identifier from PWS.',
+        'type' => 'varchar',
+        'length' => 256,
+        'not null' => TRUE,
+      ),
+      'job_info' => array(
+        'description' => 'Information object about the job.',
+        'type' => 'varchar',
+        'length' => 1024,
+        'serialize' => TRUE,
+      ),
+      'last_updated' => array(
+        'type' => 'datetime',
+        'mysql_type' => 'datetime',
+      )
+    ),
+  );
+  return $schema;
 }
 
 /**
