@@ -224,18 +224,9 @@ function theme_os2web_esdh_case($vars) {
   }
   $docids = array();
   foreach ($ids as $id) {
-    $case = os2web_esdh_provider_invoke('cm', 'get_case_data', $id);
-    // error_log("Var: \$case = " . print_r($case, 1));
-    if (FALSE === $case) {
-      // Ignore failed case lookups.
-      continue;
+    if (_os2web_esdh_field_case_access($id)) {
+      $docids = array_merge($docids, os2web_esdh_provider_invoke('cm', 'get_case_docs', $id));
     }
-    $valid = _os2web_esdh_field_case_access($id);
-    if (!$valid) {
-      // Ignore hidden cases.
-      continue;
-    }
-    $docids = array_merge($docids, os2web_esdh_provider_invoke('cm', 'get_case_docs', $id));
   }
   $html = theme('os2web_esdh_document', array('id' => $docids, 'iscase' => TRUE));
   return $html;
@@ -262,14 +253,15 @@ function theme_os2web_esdh_document($vars) {
   $html = '';
   $rows = array();
   foreach ($id as $docid) {
-    $doc = os2web_esdh_provider_invoke('cm', 'get_document', $docid);
-    if (_os2web_esdh_field_doc_access($docid)) {
-      // Only show public documents.
-      if (($doc !== FALSE) && _os2web_esdh_field_case_access($doc['case_reference'])) {
-        $rows[] = array(
-          l($doc['title'], os2web_esdh_provider_invoke('cm', 'get_document_file', $docid)) . '<span class="documentdate">' . format_date(strtotime($doc['last_update']), 'custom', 'd/m/Y') . '</span>',
-        );
-      }
+    if ($file _os2web_esdh_field_get_file_by_did($docid) &&
+        $document_meta = os2web_esdh_provider_invoke('cm', 'get_document', $docid)) {
+      $rows[] = array(
+        l($document_meta['title'], file_create_url($file->uri)) . '<span class="documentdate">' . format_date(strtotime($document_meta['last_update']), 'custom', 'd/m/Y') . '</span>',
+      );
+    }
+    else {
+      // Add the documet to be updated trough cron.
+      _os2web_esdh_field_add_to_cron($docid);
     }
   }
   if (count($rows) == 0) {
@@ -417,27 +409,7 @@ function _os2web_esdh_field_update_cm_documents_from_pws($node) {
 
   if (count($documents)) {
     foreach ($documents as $document_id) {
-      $doc_in_db = db_select('os2web_esdh_field_cm_documents', 'd')
-        ->fields('d')
-        ->condition('did', $document_id)
-        ->execute()
-        ->fetchAssoc();
-      if (!$doc_in_db) {
-        db_insert('os2web_esdh_field_cm_documents')->fields(array('did', 'job_info'))
-          ->values(array(
-            'did' => $document_id,
-            'job_info' => 'update'
-          ))
-          ->execute();
-      }
-      else {
-        db_update('os2web_esdh_field_cm_documents')
-          ->fields(array(
-            'job_info' => 'update',
-          ))
-          ->condition('did', $document_id)
-          ->execute();
-      }
+      _os2web_esdh_field_add_to_cron($document_id);
     }
   }
 }
@@ -553,6 +525,36 @@ function _os2web_esdh_field_delete_doc_by_did($document_id) {
   $doc_in_db = db_delete('os2web_esdh_field_cm_documents')
     ->condition('did', $document_id)
     ->execute();
+}
+
+/**
+ * Helper function to add an document to the cron table.
+ * @param  int $document_id
+ *   The document ID
+ */
+function _os2web_esdh_field_add_to_cron($document_id)
+{
+  $doc_in_db = db_select('os2web_esdh_field_cm_documents', 'd')
+    ->fields('d')
+    ->condition('did', $document_id)
+    ->execute()
+    ->fetchAssoc();
+  if (!$doc_in_db) {
+    db_insert('os2web_esdh_field_cm_documents')->fields(array('did', 'job_info'))
+      ->values(array(
+        'did' => $document_id,
+        'job_info' => 'update'
+      ))
+      ->execute();
+  }
+  else {
+    db_update('os2web_esdh_field_cm_documents')
+      ->fields(array(
+        'job_info' => 'update',
+      ))
+      ->condition('did', $document_id)
+      ->execute();
+  }
 }
 
 /**
