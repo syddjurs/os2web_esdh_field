@@ -114,7 +114,7 @@ function os2web_esdh_field_update_7002(&$sandbox) {
  * Create new database table os2web_esdh_field_cm_documents.
  */
 function os2web_esdh_field_update_7003() {
-  if (!db_table_exists()) {
+  if (!db_table_exists('os2web_esdh_field_cm_documents')) {
     $schema = drupal_get_schema('os2web_esdh_field_cm_documents', TRUE);
     db_create_table('os2web_esdh_field_cm_documents', $schema);
   }
