@@ -253,7 +253,7 @@ function theme_os2web_esdh_document($vars) {
   $html = '';
   $rows = array();
   foreach ($id as $docid) {
-    if ($file _os2web_esdh_field_get_file_by_did($docid) &&
+    if ($file = _os2web_esdh_field_get_file_by_did($docid) &&
         $document_meta = os2web_esdh_provider_invoke('cm', 'get_document', $docid)) {
       $rows[] = array(
         l($document_meta['title'], file_create_url($file->uri)) . '<span class="documentdate">' . format_date(strtotime($document_meta['last_update']), 'custom', 'd/m/Y') . '</span>',
