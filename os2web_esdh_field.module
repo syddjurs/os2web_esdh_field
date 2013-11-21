@@ -265,7 +265,7 @@ function theme_os2web_esdh_document($vars) {
     }
   }
   if (count($rows) == 0) {
-    if ($vars['iscase']) {
+    if (isset($vars['iscase'])) {
       $html .= '<p>' . t('This case contains no public documents.') . '</p>';
     }
     return $html;
