@@ -223,10 +223,23 @@ function theme_os2web_esdh_case($vars) {
     $ids = array($ids);
   }
   $docids = array();
-  foreach ($ids as $id) {
-    if (_os2web_esdh_field_case_access($id)) {
-      $docids = array_merge($docids, os2web_esdh_provider_invoke('cm', 'get_case_docs', $id));
+  try {
+    foreach ($ids as $id) {
+      if (_os2web_esdh_field_case_access($id)) {
+        $docids = array_merge($docids, os2web_esdh_provider_invoke('cm', 'get_case_docs', $id));
+      }
     }
+  } catch (Exception $e) {
+    // Show a polite message if the connection to Acadre is broken.
+    $markup = '<div class="messages error"><ul><li>';
+    $markup .= t('There was a problem connecting to the case service provider. Sorry for the inconvenience.');
+    $markup .= '</li></ul></div>';
+
+    $page['region'] = array(
+      '#type' => 'markup',
+      '#markup' => $markup,
+    );
+    return render($page);
   }
   $html = theme('os2web_esdh_document', array('id' => $docids, 'iscase' => TRUE));
   return $html;
@@ -390,13 +403,7 @@ function _os2web_esdh_field_update_cm_documents_from_pws($node) {
         continue;
       }
 
-      $access_grant = array(
-        'access_code' => 'KK',
-        'restricted_from_public' => ACADRE_CM_ACCESS_OPEN_CASE,
-      );
-
-      if ($case['access_code'] === $access_grant['access_code'] &&
-          $case['restricted_from_public'] === $access_grant['restricted_from_public']) {
+      if (_os2web_esdh_field_case_access($case_id)) {
         // Document has the appropiate access settings.
         $documents = array_merge($documents, os2web_esdh_provider_invoke('cm', 'get_case_docs', $case_id));
       }
