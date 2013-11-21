@@ -427,14 +427,12 @@ function os2web_esdh_field_cron() {
   if ($queue->numberOfItems() == 0) {
     $query = db_select('os2web_esdh_field_cm_documents', 'd')
       ->fields('d')
-      ->condition('job_info', 'update');
+      ->condition('job_info', 'update')
+      ->orderBy('d.last_updated', 'DESC')
+      ->range(0, 100);
     $documents = $query->execute()->fetchAll(PDO::FETCH_ASSOC);
 
-    $chunk_size = max(min((int) sqrt(count($documents)), 25), 1);
-    $documents = array_chunk($documents, $chunk_size);
-
     if (count($documents)) {
-      $documents = array_pop($documents);
       foreach ($documents as $document) {
         $queue->createItem($document);
       }
@@ -481,6 +479,7 @@ function _os2web_esdh_field_update_document($document) {
       }
     }
     _os2web_esdh_field_delete_doc_by_did($document['did']);
+    watchdog('os2web_esdh_field', 'Document (did: %did) deleted fom queue.', array('%did' => $document['did']), WATCHDOG_INFO);
   }
 }
 
