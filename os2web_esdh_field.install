@@ -37,8 +37,8 @@ function os2web_esdh_field_field_schema($field) {
 /**
  * Implements hook_schema().
  */
-function os2web_acadre_esdh_schema() {
-  $schema['os2web_acadre_esdh_cm_documents'] = array(
+function os2web_esdh_field_schema() {
+  $schema['os2web_esdh_field_cm_documents'] = array(
     'description' => 'This table keep track of files from Acadre PWS which needs to be created/updated',
     'fields' => array(
       'fid' => array(
@@ -107,4 +107,15 @@ function os2web_esdh_field_update_7002(&$sandbox) {
   $ret[] = db_change_field('field_data_field_case', 'field_case_case_ident', 'field_case_case_ident', $field);
   $ret[] = db_change_field('field_revision_field_case', 'field_case_case_ident', 'field_case_case_ident', $field);
   return $ret;
+}
+
+
+/**
+ * Create new database table os2web_esdh_field_cm_documents.
+ */
+function os2web_esdh_field_update_7003() {
+  if (!db_table_exists()) {
+    $schema = drupal_get_schema('os2web_esdh_field_cm_documents', TRUE);
+    db_create_table('os2web_esdh_field_cm_documents', $schema);
+  }
 }
