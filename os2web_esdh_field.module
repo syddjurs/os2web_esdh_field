@@ -394,6 +394,15 @@ function _os2web_esdh_field_update_cm_documents_from_pws($node) {
 
   $cases = explode(',', preg_replace('/\s+/', '', $node->field_os2web_base_field_case[LANGUAGE_NONE][0]['os2web_esdh_field_case_ident']));
   $documents = explode(',', preg_replace('/\s+/', '', $node->field_os2web_base_field_doc[LANGUAGE_NONE][0]['os2web_esdh_field_doc_ident']));
+
+  // Translate the document to correct ID.
+  foreach ($documents as &$document) {
+    // Translate the SSSSSS/YY serial into database identifier.
+    if (!is_numeric($document)) {
+      $document = ops2web_acadre_esdh_lookup_doc($doc_id);
+    }
+  }
+
   foreach ($cases as $key => $case_id) {
     try {
       $case = os2web_esdh_provider_invoke('cm', 'get_case_data', $case_id);
@@ -442,7 +451,7 @@ function os2web_esdh_field_cron() {
       ->orderBy('d.last_updated', 'DESC')
       ->range(0, 100);
     $documents = $query->execute()->fetchAll(PDO::FETCH_ASSOC);
-error_log(print_r($documents, 1));
+    watchdog('os2web_esdh_field', 'Adding %count documents to update queue.', array('%count' => count($documents)), WATCHDOG_INFO);
     if (count($documents)) {
       foreach ($documents as $document) {
         $queue->createItem($document);
