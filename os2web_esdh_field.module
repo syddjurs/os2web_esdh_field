@@ -509,7 +509,10 @@ function _os2web_esdh_field_add_all_documents_to_requeue() {
   // 3. Update all documents which has a newer version.
   foreach ($esdh_documents as $esdh_document) {
     if(isset($document_to_update[$esdh_document->DocumentIdentifier]) &&
-       strtotime($document_to_update[$esdh_document->DocumentIdentifier]) < strtotime($esdh_document->ChangedDateTime)) {
+       strtotime($document_to_update[$esdh_document->DocumentIdentifier]) < strtotime($esdh_document->ChangedDateTime) &&
+       _os2web_esdh_field_doc_access($esdh_document->DocumentIdentifier) &&
+       _os2web_esdh_field_case_access($esdh_document->CaseFileReference)) {
+
       _os2web_esdh_field_add_to_cron($esdh_document->DocumentIdentifier);
     }
   }
@@ -521,6 +524,7 @@ function _os2web_esdh_field_add_all_documents_to_requeue() {
 function os2web_esdh_field_cron_queue_info() {
   $queues['os2web_esdh_field_cm_doc_queue'] = array(
     'worker callback' => '_os2web_esdh_field_update_document',
+    'time' => 300,
   );
   return $queues;
 }
