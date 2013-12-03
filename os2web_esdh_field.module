@@ -223,10 +223,23 @@ function theme_os2web_esdh_case($vars) {
     $ids = array($ids);
   }
   $docids = array();
-  foreach ($ids as $id) {
-    if (_os2web_esdh_field_case_access($id)) {
-      $docids = array_merge($docids, os2web_esdh_provider_invoke('cm', 'get_case_docs', $id));
+  try {
+    foreach ($ids as $id) {
+      if (_os2web_esdh_field_case_access($id)) {
+        $docids = array_merge($docids, os2web_esdh_provider_invoke('cm', 'get_case_docs', $id));
+      }
     }
+  } catch (Exception $e) {
+    // Show a polite message if the connection to Acadre is broken.
+    $markup = '<div class="messages error"><ul><li>';
+    $markup .= t('There was a problem connecting to the case service provider. Sorry for the inconvenience.');
+    $markup .= '</li></ul></div>';
+
+    $page['region'] = array(
+      '#type' => 'markup',
+      '#markup' => $markup,
+    );
+    return render($page);
   }
   $html = theme('os2web_esdh_document', array('id' => $docids, 'iscase' => TRUE));
   return $html;
@@ -253,8 +266,8 @@ function theme_os2web_esdh_document($vars) {
   $html = '';
   $rows = array();
   foreach ($id as $docid) {
-    if ($file = _os2web_esdh_field_get_file_by_did($docid) &&
-        $document_meta = os2web_esdh_provider_invoke('cm', 'get_document', $docid)) {
+    $file = _os2web_esdh_field_get_file_by_did($docid);
+    if (is_object($file) && $document_meta = os2web_esdh_provider_invoke('cm', 'get_document', $docid)) {
       $rows[] = array(
         l($document_meta['title'], file_create_url($file->uri)) . '<span class="documentdate">' . format_date(strtotime($document_meta['last_update']), 'custom', 'd/m/Y') . '</span>',
       );
@@ -265,7 +278,7 @@ function theme_os2web_esdh_document($vars) {
     }
   }
   if (count($rows) == 0) {
-    if ($vars['iscase']) {
+    if (isset($vars['iscase'])) {
       $html .= '<p>' . t('This case contains no public documents.') . '</p>';
     }
     return $html;
@@ -381,6 +394,15 @@ function _os2web_esdh_field_update_cm_documents_from_pws($node) {
 
   $cases = explode(',', preg_replace('/\s+/', '', $node->field_os2web_base_field_case[LANGUAGE_NONE][0]['os2web_esdh_field_case_ident']));
   $documents = explode(',', preg_replace('/\s+/', '', $node->field_os2web_base_field_doc[LANGUAGE_NONE][0]['os2web_esdh_field_doc_ident']));
+
+  // Translate the document to correct ID.
+  foreach ($documents as &$document) {
+    // Translate the SSSSSS/YY serial into database identifier.
+    if (!is_numeric($document)) {
+      $document = ops2web_acadre_esdh_lookup_doc($doc_id);
+    }
+  }
+
   foreach ($cases as $key => $case_id) {
     try {
       $case = os2web_esdh_provider_invoke('cm', 'get_case_data', $case_id);
@@ -390,13 +412,7 @@ function _os2web_esdh_field_update_cm_documents_from_pws($node) {
         continue;
       }
 
-      $access_grant = array(
-        'access_code' => 'KK',
-        'restricted_from_public' => ACADRE_CM_ACCESS_OPEN_CASE,
-      );
-
-      if ($case['access_code'] === $access_grant['access_code'] &&
-          $case['restricted_from_public'] === $access_grant['restricted_from_public']) {
+      if (_os2web_esdh_field_case_access($case_id)) {
         // Document has the appropiate access settings.
         $documents = array_merge($documents, os2web_esdh_provider_invoke('cm', 'get_case_docs', $case_id));
       }
@@ -422,22 +438,82 @@ function os2web_esdh_field_cron() {
   if (!os2web_esdh_provider_has_api('cm')) {
     return;
   }
+
+  _os2web_esdh_field_add_all_documents_to_requeue();
+
+  // Get documents which needs updating and put them in a queue.
   $queue = DrupalQueue::get('os2web_esdh_field_cm_doc_queue');
 
   if ($queue->numberOfItems() == 0) {
     $query = db_select('os2web_esdh_field_cm_documents', 'd')
       ->fields('d')
-      ->condition('job_info', 'update');
+      ->condition('job_info', 'update')
+      ->orderBy('d.last_updated', 'DESC')
+      ->range(0, 100);
     $documents = $query->execute()->fetchAll(PDO::FETCH_ASSOC);
-
-    $chunk_size = max(min((int) sqrt(count($documents)), 25), 1);
-    $documents = array_chunk($documents, $chunk_size);
-
+    watchdog('os2web_esdh_field', 'Adding %count documents to update queue.', array('%count' => count($documents)), WATCHDOG_INFO);
     if (count($documents)) {
-      $documents = array_pop($documents);
       foreach ($documents as $document) {
         $queue->createItem($document);
       }
+    }
+  }
+}
+
+function _os2web_esdh_field_add_all_documents_to_requeue() {
+  // Check for correct api and required functions are implemented.
+  if (!os2web_esdh_provider_has_api('cm')) {
+    return;
+  }
+
+  // 1.
+  // Get all documents we now, and ask CM of new ones..
+  $old_documents = db_select('os2web_esdh_field_cm_documents', 'd')
+    ->condition('job_info', 'update', '!=')
+    ->fields('d')
+    ->execute()
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+  $old_cases = db_select('field_data_field_os2web_base_field_case', 'd')
+    ->fields('d', array('field_os2web_base_field_case_os2web_esdh_field_case_ident'))
+    ->execute()
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+  $document_to_update = array();
+
+  foreach ($old_documents as $old_document) {
+    $document_to_update[$old_document['did']] = $old_document['last_updated'];
+  }
+
+  foreach ($old_cases as $old_case) {
+    $case_ids = explode(',', preg_replace('/\s+/', '', $old_case['field_os2web_base_field_case_os2web_esdh_field_case_ident']));
+    foreach ($case_ids as $case_id) {
+      if (!empty($case_id)) {
+        // Get all cases documents from CM. If any new are added, they are also
+        // added to the queue.
+        $retrived_documents = os2web_esdh_provider_invoke('cm', 'get_case_docs', $case_id);
+        foreach ($retrived_documents as $retrived_document) {
+          if (!isset($document_to_update[$retrived_document])) {
+            $document_to_update[$retrived_document] = '1970-01-01 00:00:00';
+          }
+        }
+      }
+    }
+  }
+
+  // 2.
+  // Get all meta data for every document we now.
+  $newest_documents = array();
+  $esdh_documents = os2web_esdh_provider_invoke('cm', 'get_documents', array_keys($document_to_update));
+
+  // 3. Update all documents which has a newer version.
+  foreach ($esdh_documents as $esdh_document) {
+    if(isset($document_to_update[$esdh_document->DocumentIdentifier]) &&
+       strtotime($document_to_update[$esdh_document->DocumentIdentifier]) < strtotime($esdh_document->ChangedDateTime) &&
+       _os2web_esdh_field_doc_access($esdh_document->DocumentIdentifier) &&
+       _os2web_esdh_field_case_access($esdh_document->CaseFileReference)) {
+
+      _os2web_esdh_field_add_to_cron($esdh_document->DocumentIdentifier);
     }
   }
 }
@@ -448,6 +524,7 @@ function os2web_esdh_field_cron() {
 function os2web_esdh_field_cron_queue_info() {
   $queues['os2web_esdh_field_cm_doc_queue'] = array(
     'worker callback' => '_os2web_esdh_field_update_document',
+    'time' => 300,
   );
   return $queues;
 }
@@ -481,6 +558,7 @@ function _os2web_esdh_field_update_document($document) {
       }
     }
     _os2web_esdh_field_delete_doc_by_did($document['did']);
+    watchdog('os2web_esdh_field', 'Document (did: %did) deleted fom queue.', array('%did' => $document['did']), WATCHDOG_INFO);
   }
 }
 
