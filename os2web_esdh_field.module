@@ -269,7 +269,7 @@ function theme_os2web_esdh_document($vars) {
     $file = _os2web_esdh_field_get_file_by_did($docid);
     if (is_object($file) && $document_meta = os2web_esdh_provider_invoke('cm', 'get_document', $docid)) {
       $rows[] = array(
-        l($document_meta['title'], file_create_url($file->uri), array('target' => '_blank')) . '<span class="documentdate">' . format_date(strtotime($document_meta['last_update']), 'custom', 'd/m/Y') . '</span>',
+        l($document_meta['title'], file_create_url($file->uri), array('attributes' => array('target' => '_blank'))) . '<span class="documentdate">' . format_date(strtotime($document_meta['last_update']), 'custom', 'd/m/Y') . '</span>',
       );
     }
     else {
